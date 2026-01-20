@@ -7,16 +7,18 @@ from typing import Dict, Sequence
 import numpy as np
 
 from benchmark_mps.utils.linalg import peripheral_period, spectral_radius_and_eigs, superop_matrix
+from benchmark_mps.utils.backend import current_backend
 
 
 def brute_gamma_values(kraus_ops: Sequence[np.ndarray], n_max: int) -> list[float]:
+    xp = current_backend().xp
     mat = superop_matrix(kraus_ops)
     dim = mat.shape[0]
-    power = np.eye(dim, dtype=complex)
+    power = xp.eye(dim, dtype=complex)
     values: list[float] = []
     for _ in range(1, n_max + 1):
         power = power @ mat
-        values.append(float(np.trace(power).real))
+        values.append(float(xp.trace(power).real))
     return values
 
 

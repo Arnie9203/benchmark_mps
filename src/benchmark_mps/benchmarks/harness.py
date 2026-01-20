@@ -30,6 +30,7 @@ from benchmark_mps.metrics.metrics import (
     compute_tightness,
     materialize_omega,
 )
+from benchmark_mps.utils.backend import convert_kraus_ops
 from benchmark_mps.utils.linalg import peripheral_period, spectral_radius_and_eigs, superop_matrix
 
 
@@ -98,6 +99,7 @@ def run_instance(
     instance: InstanceSpec,
     config: BenchmarkConfig,
 ) -> list[BenchmarkRecord]:
+    kraus_ops = convert_kraus_ops(kraus_ops)
     predicate = PredicateSpec(
         interval=config.interval,
         n_max=config.n_max,
