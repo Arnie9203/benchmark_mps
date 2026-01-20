@@ -3,13 +3,23 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from benchmark_mps.benchmarks.harness import BenchmarkConfig, run_sweep
 from benchmark_mps.benchmarks.schema import InstanceSpec
 from benchmark_mps.io.output import write_jsonl
 from benchmark_mps.models.examples import build_example3_kraus
-from benchmark_mps.models.physical import aklt_kraus, cluster_kraus
+from benchmark_mps.models.physical import (
+    aklt_kraus,
+    bose_hubbard_kraus,
+    cluster_kraus,
+    j1j2_kraus,
+    kitaev_chain_kraus,
+    tfim_kraus,
+    transfer_kraus,
+    xxz_kraus,
+)
 from benchmark_mps.models.synthetic import SyntheticSpec, generate_synthetic_kraus
 from benchmark_mps.formulas.generator import FormulaSpec, build_formula_suite
 
@@ -22,11 +32,30 @@ def _parse_float_list(value: str) -> list[float]:
     return [float(item.strip()) for item in value.split(",") if item.strip()]
 
 
+def _load_model_config(value: str | None) -> dict:
+    if not value:
+        return {}
+    path = Path(value)
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return json.loads(value)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run MPS benchmark sweeps.")
     parser.add_argument(
         "--family",
-        choices=["synthetic", "example3", "aklt", "cluster"],
+        choices=[
+            "synthetic",
+            "example3",
+            "aklt",
+            "cluster",
+            "tfim",
+            "xxz",
+            "j1j2",
+            "bose_hubbard",
+            "kitaev_chain",
+        ],
         default="synthetic",
     )
     parser.add_argument(
@@ -60,6 +89,26 @@ def build_parser() -> argparse.ArgumentParser:
         default=1,
         help="Block-diagonal scaling for physical models.",
     )
+    parser.add_argument(
+        "--mps-path",
+        type=str,
+        help="Path to DMRG/TEBD MPS tensors (.npy/.npz) for physical families.",
+    )
+    parser.add_argument(
+        "--transfer-op-path",
+        type=str,
+        help="Path to a transfer/superoperator matrix (.npy/.npz) to recover Kraus operators.",
+    )
+    parser.add_argument(
+        "--model-config",
+        type=str,
+        help="JSON string or path to JSON file with model parameters (e.g. couplings, source).",
+    )
+    parser.add_argument(
+        "--algorithm-source",
+        type=str,
+        help="Algorithm source label for DMRG/TEBD inputs (e.g. 'DMRG' or 'TEBD').",
+    )
     parser.add_argument("--interval", type=str, default="0.95,1.05", help="Interval a,b.")
     parser.add_argument("--n-max", type=int, default=240)
     parser.add_argument("--tail-window", type=int, default=12)
@@ -81,6 +130,8 @@ def main() -> None:
         raise SystemExit(f"Unknown formula '{args.formula}'. Options: {', '.join(formula_map)}")
 
     formulas = formula_suite if args.formula_suite else [FormulaSpec(name=args.formula, formula=formula_map[args.formula])]
+
+    model_config = _load_model_config(args.model_config)
 
     records = []
     for formula_spec in formulas:
@@ -143,7 +194,7 @@ def main() -> None:
                 )
                 generators.append((instance, kraus_ops))
             records.extend(run_sweep(generators, config))
-        else:
+        elif args.family == "cluster":
             epsilons = _parse_float_list(args.epsilons)
             generators = []
             for epsilon in epsilons:
@@ -157,6 +208,63 @@ def main() -> None:
                     meta={"scale": args.physical_scale},
                 )
                 generators.append((instance, kraus_ops))
+            records.extend(run_sweep(generators, config))
+        else:
+            if not args.mps_path and not args.transfer_op_path:
+                raise SystemExit("Physical families require --mps-path or --transfer-op-path.")
+            epsilons = _parse_float_list(args.epsilons)
+            repeats = _parse_int_list(args.repeats)
+            seed = int(model_config.get("seed", 0))
+            parameters = (
+                model_config.get("parameters")
+                or model_config.get("couplings")
+                or model_config.get("params")
+                or {}
+            )
+            model_name = model_config.get("model", args.family)
+            source = model_config.get("source") or args.algorithm_source or "unspecified"
+
+            builder_map = {
+                "tfim": tfim_kraus,
+                "xxz": xxz_kraus,
+                "j1j2": j1j2_kraus,
+                "bose_hubbard": bose_hubbard_kraus,
+                "kitaev_chain": kitaev_chain_kraus,
+            }
+            builder = builder_map[args.family]
+
+            generators = []
+            for epsilon in epsilons:
+                if args.transfer_op_path:
+                    kraus_ops = transfer_kraus(
+                        args.transfer_op_path,
+                        epsilon=epsilon,
+                        scale=args.physical_scale,
+                    )
+                    input_kind = "transfer_operator"
+                    input_path = args.transfer_op_path
+                else:
+                    kraus_ops = builder(args.mps_path, epsilon=epsilon, scale=args.physical_scale)
+                    input_kind = "mps"
+                    input_path = args.mps_path
+                meta = {
+                    "model": model_name,
+                    "parameters": parameters,
+                    "source": source,
+                    "input_kind": input_kind,
+                    "input_path": input_path,
+                    "scale": args.physical_scale,
+                }
+                for repeat in repeats:
+                    instance = InstanceSpec(
+                        family=args.family,
+                        bond_dimension=kraus_ops[0].shape[0],
+                        epsilon=epsilon,
+                        seed=seed,
+                        repeat=repeat,
+                        meta=meta,
+                    )
+                    generators.append((instance, kraus_ops))
             records.extend(run_sweep(generators, config))
 
     output_path = Path(args.output)
