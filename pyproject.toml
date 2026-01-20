@@ -1,0 +1,30 @@
+[project]
+name = "benchmark-mps"
+version = "0.1.0"
+description = "Benchmark harness for MPS experiments"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Benchmark MPS" }]
+
+dependencies = [
+  "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+bench = [
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+]
+
+test = [
+  "pytest>=7.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
