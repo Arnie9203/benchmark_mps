@@ -91,12 +91,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="Block-diagonal scaling for physical models.",
     )
     parser.add_argument(
-        "--backend",
-        choices=["numpy", "cupy"],
-        default="numpy",
-        help="Linear algebra backend for CPU/GPU execution.",
-    )
-    parser.add_argument(
         "--mps-path",
         type=str,
         help="Path to DMRG/TEBD MPS tensors (.npy/.npz) for physical families.",
