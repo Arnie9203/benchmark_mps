@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from benchmark_mps.benchmarks.harness import BenchmarkConfig, run_sweep
+from benchmark_mps.benchmarks.harness import BenchmarkMethodConfig
 from benchmark_mps.benchmarks.schema import InstanceSpec
 from benchmark_mps.io.output import write_jsonl
 from benchmark_mps.models.examples import build_example3_kraus
@@ -31,6 +32,17 @@ def _parse_int_list(value: str) -> list[int]:
 
 def _parse_float_list(value: str) -> list[float]:
     return [float(item.strip()) for item in value.split(",") if item.strip()]
+
+
+def _parse_methods(value: str | None) -> tuple[BenchmarkMethodConfig, ...]:
+    if not value:
+        return BenchmarkConfig().methods
+    methods = [item.strip() for item in value.split(",") if item.strip()]
+    valid = {method.name for method in BenchmarkConfig().methods}
+    unknown = [method for method in methods if method not in valid]
+    if unknown:
+        raise SystemExit(f"Unknown methods: {', '.join(unknown)}. Options: {', '.join(sorted(valid))}")
+    return tuple(BenchmarkMethodConfig(name=method) for method in methods)
 
 
 def _load_model_config(value: str | None) -> dict:
@@ -124,6 +136,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--interval", type=str, default="0.95,1.05", help="Interval a,b.")
     parser.add_argument("--n-max", type=int, default=240)
     parser.add_argument("--tail-window", type=int, default=12)
+    parser.add_argument(
+        "--methods",
+        type=str,
+        help="Comma-separated list of methods to run (alg2, brute, schur).",
+    )
     parser.add_argument("--output", type=str, default="results/benchmark.jsonl")
     return parser
 
@@ -155,6 +172,7 @@ def main() -> None:
             tail_window=args.tail_window,
             formula=formula_spec.formula,
             formula_name=formula_spec.name,
+            methods=_parse_methods(args.methods),
         )
 
         if args.family == "synthetic":

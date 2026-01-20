@@ -37,6 +37,8 @@ def superop_matrix(kraus_ops: Sequence[np.ndarray]) -> np.ndarray:
     dim = kraus_ops[0].shape[0]
     mat = xp.zeros((dim * dim, dim * dim), dtype=backend.complex_dtype)
     for op in kraus_ops:
+        if backend.name == "torch":
+            op = xp.as_tensor(op, dtype=backend.complex_dtype).to(device=backend.device)
         mat += xp.kron(op.conj(), op)
     return mat
 

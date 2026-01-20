@@ -67,13 +67,17 @@ def to_numpy(value: Any) -> Any:
 def asarray(value: Any) -> Any:
     backend = current_backend()
     if backend.name == "torch":
-        tensor = backend.xp.as_tensor(value, dtype=backend.complex_dtype, device=backend.device)
-        return tensor
+        tensor = backend.xp.as_tensor(value, dtype=backend.complex_dtype)
+        return tensor.to(device=backend.device)
     return backend.xp.asarray(value)
 
 
 def convert_kraus_ops(kraus_ops: Sequence[Any]) -> list[Any]:
     backend = current_backend()
     if backend.name == "torch":
-        return [backend.xp.as_tensor(op, dtype=backend.complex_dtype, device=backend.device) for op in kraus_ops]
+        out = []
+        for op in kraus_ops:
+            tensor = backend.xp.as_tensor(op, dtype=backend.complex_dtype)
+            out.append(tensor.to(device=backend.device))
+        return out
     return [backend.xp.asarray(op) for op in kraus_ops]
