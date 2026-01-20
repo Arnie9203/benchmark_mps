@@ -26,6 +26,10 @@ def apply_channel(kraus_ops: Sequence[np.ndarray], mat: np.ndarray) -> np.ndarra
 
 
 def hermitian_from_vec(vec: np.ndarray, dim: int) -> np.ndarray:
+    backend = current_backend()
+    if backend.name == "torch":
+        mat = vec.reshape(dim, dim).transpose(0, 1)
+        return (mat + mat.conj().transpose(0, 1)) / 2
     mat = vec.reshape((dim, dim), order="F")
     return (mat + mat.conj().T) / 2
 
