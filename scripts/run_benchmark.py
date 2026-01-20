@@ -22,6 +22,7 @@ from benchmark_mps.models.physical import (
 )
 from benchmark_mps.models.synthetic import SyntheticSpec, generate_synthetic_kraus
 from benchmark_mps.formulas.generator import FormulaSpec, build_formula_suite
+from benchmark_mps.utils.backend import set_backend
 
 
 def _parse_int_list(value: str) -> list[int]:
@@ -119,6 +120,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+
+    set_backend(args.backend)
 
     interval_values = _parse_float_list(args.interval)
     if len(interval_values) != 2:
