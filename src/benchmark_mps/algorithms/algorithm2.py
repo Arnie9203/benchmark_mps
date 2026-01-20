@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Dict, Sequence
 
 import numpy as np
-import numpy.linalg as la
+
+from benchmark_mps.utils.backend import current_backend
 
 from benchmark_mps.utils.linalg import (
     lcm_list,
@@ -17,52 +18,69 @@ from benchmark_mps.utils.linalg import (
 
 
 def apply_channel(kraus_ops: Sequence[np.ndarray], mat: np.ndarray) -> np.ndarray:
-    acc = np.zeros_like(mat, dtype=complex)
+    xp = current_backend().xp
+    acc = xp.zeros_like(mat)
     for op in kraus_ops:
         acc += op @ mat @ op.conj().T
     return acc
 
 
 def hermitian_from_vec(vec: np.ndarray, dim: int) -> np.ndarray:
+    backend = current_backend()
+    if backend.name == "torch":
+        mat = vec.reshape(dim, dim).transpose(0, 1)
+        return (mat + mat.conj().transpose(0, 1)) / 2
     mat = vec.reshape((dim, dim), order="F")
     return (mat + mat.conj().T) / 2
 
 
 def pos_neg_parts(mat: np.ndarray, tol: float = 1e-12) -> tuple[np.ndarray, np.ndarray]:
+    backend = current_backend()
+    xp = backend.xp
+    la = backend.la
     eigvals, eigvecs = la.eigh(mat)
-    pos = np.clip(eigvals, 0, None)
-    neg = np.clip(-eigvals, 0, None)
+    pos = xp.clip(eigvals, 0, None) if backend.name != "torch" else xp.clamp(eigvals, min=0)
+    neg = xp.clip(-eigvals, 0, None) if backend.name != "torch" else xp.clamp(-eigvals, min=0)
     pos_mat = (eigvecs * pos) @ eigvecs.conj().T
     neg_mat = (eigvecs * neg) @ eigvecs.conj().T
-    pos_mat[np.abs(pos_mat) < tol] = 0
-    neg_mat[np.abs(neg_mat) < tol] = 0
+    pos_mat[xp.abs(pos_mat) < tol] = 0
+    neg_mat[xp.abs(neg_mat) < tol] = 0
     return pos_mat, neg_mat
 
 
 def support_basis_psd(mat: np.ndarray, tol: float = 1e-10) -> np.ndarray:
+    backend = current_backend()
+    xp = backend.xp
+    la = backend.la
     eigvals, eigvecs = la.eigh(mat)
-    idx = np.where(eigvals > tol)[0]
+    idx = xp.where(eigvals > tol)[0]
     if len(idx) == 0:
-        return np.zeros((mat.shape[0], 0), dtype=complex)
+        return xp.zeros((mat.shape[0], 0), dtype=backend.complex_dtype)
     basis = eigvecs[:, idx]
     q, _ = la.qr(basis)
     return q
 
 
 def basis_union(bases: Sequence[np.ndarray], tol: float = 1e-10) -> np.ndarray:
+    backend = current_backend()
+    xp = backend.xp
+    la = backend.la
     cols = [basis for basis in bases if basis.shape[1] > 0]
     if not cols:
-        return np.zeros((bases[0].shape[0], 0), dtype=complex)
-    mat = np.concatenate(cols, axis=1)
+        return xp.zeros((bases[0].shape[0], 0), dtype=backend.complex_dtype)
+    mat = xp.concatenate(cols, axis=1)
     q, _ = la.qr(mat)
     u, s, _ = la.svd(q, full_matrices=False)
-    rank = np.sum(s > tol)
+    rank = int(xp.sum(s > tol).item() if backend.name == "torch" else xp.sum(s > tol))
     return u[:, :rank]
 
 
 def orth_complement(basis: np.ndarray, tol: float = 1e-10) -> np.ndarray:
+    backend = current_backend()
+    xp = backend.xp
+    la = backend.la
     if basis.shape[1] == 0:
-        return np.eye(basis.shape[0], dtype=complex)
+        return xp.eye(basis.shape[0], dtype=backend.complex_dtype)
     null = nullspace(basis.conj().T, tol=tol)
     q, _ = la.qr(null)
     return q
@@ -73,13 +91,16 @@ def restrict_kraus(kraus_ops: Sequence[np.ndarray], basis: np.ndarray) -> list[n
 
 
 def dedup_psd_list(mats: Sequence[np.ndarray], tol: float = 1e-8) -> list[np.ndarray]:
+    backend = current_backend()
+    xp = backend.xp
+    la = backend.la
     out: list[np.ndarray] = []
     for mat in mats:
-        trace = float(np.trace(mat).real)
+        trace = float(xp.trace(mat).real)
         if trace <= tol:
             continue
         normalized = mat / trace
-        if all(la.norm(normalized - prev) >= tol for prev in out):
+        if all(float(la.norm(normalized - prev)) >= tol for prev in out):
             out.append(normalized)
     return out
 
@@ -92,7 +113,8 @@ def decompose_irreducible_by_support(
 ) -> list[np.ndarray]:
     dim = kraus_ops[0].shape[0]
     if basis is None:
-        basis = np.eye(dim, dtype=complex)
+        backend = current_backend()
+        basis = backend.xp.eye(dim, dtype=backend.complex_dtype)
 
     sub_dim = basis.shape[1]
     if sub_dim <= 1 or depth >= max_depth:
@@ -102,14 +124,17 @@ def decompose_irreducible_by_support(
     mat = superop_matrix(sub_ops)
 
     radius, _ = spectral_radius_and_eigs(mat)
-    null = nullspace(mat - radius * np.eye(sub_dim * sub_dim, dtype=complex), tol=1e-8)
+    backend = current_backend()
+    xp = backend.xp
+    la = backend.la
+    null = nullspace(mat - radius * xp.eye(sub_dim * sub_dim, dtype=backend.complex_dtype), tol=1e-8)
     if null.shape[1] == 0:
         return [basis]
 
     hermitian_solutions: list[np.ndarray] = []
     for col in range(null.shape[1]):
         herm = hermitian_from_vec(null[:, col], sub_dim)
-        if la.norm(apply_channel(sub_ops, herm) - radius * herm) < 1e-6:
+        if float(la.norm(apply_channel(sub_ops, herm) - radius * herm)) < 1e-6:
             hermitian_solutions.append(herm)
     if not hermitian_solutions:
         return [basis]
@@ -117,9 +142,9 @@ def decompose_irreducible_by_support(
     gamma: list[np.ndarray] = []
     for herm in hermitian_solutions:
         pos, neg = pos_neg_parts(herm)
-        if np.trace(pos).real > 1e-10:
+        if float(xp.trace(pos).real) > 1e-10:
             gamma.append(pos)
-        if np.trace(neg).real > 1e-10:
+        if float(xp.trace(neg).real) > 1e-10:
             gamma.append(neg)
     gamma = dedup_psd_list(gamma, tol=1e-6)
     if not gamma:
@@ -164,12 +189,14 @@ def decompose_irreducible_by_support(
 
 
 def check_invariance(kraus_ops: Sequence[np.ndarray], basis: np.ndarray, tol: float = 1e-8) -> tuple[bool, float]:
+    backend = current_backend()
+    xp = backend.xp
     proj = basis @ basis.conj().T
-    identity = np.eye(proj.shape[0], dtype=complex)
+    identity = xp.eye(proj.shape[0], dtype=backend.complex_dtype)
     for op in kraus_ops:
-        val = la.norm((identity - proj) @ op @ proj)
+        val = float(backend.la.norm((identity - proj) @ op @ proj))
         if val > tol:
-            return False, float(val)
+            return False, val
     return True, 0.0
 
 
@@ -207,16 +234,23 @@ def algorithm2_from_kraus(
     nonperiph_mods: list[float] = []
     for idx, eigvals in enumerate(eigs_list):
         radius = radii[idx]
-        periph = [lam for lam in eigvals if abs(abs(lam) - radius) <= tol_periph]
+        periph: list[np.ndarray] = []
+        for lam in eigvals:
+            diff = abs(lam) - radius
+            if float(abs(diff)) <= tol_periph:
+                periph.append(lam)
         periph_eigs.append(periph)
         for lam in eigvals:
-            if abs(abs(lam) - radius) > tol_periph:
-                nonperiph_mods.append(abs(lam))
+            diff = abs(lam) - radius
+            if float(abs(diff)) > tol_periph:
+                nonperiph_mods.append(float(abs(lam)))
 
     def gamma(n: int) -> float:
-        total = 0 + 0j
+        backend = current_backend()
+        xp = backend.xp
+        total = xp.zeros((), dtype=backend.complex_dtype)
         for eigvals in eigs_list:
-            total += np.sum(eigvals**n)
+            total += xp.sum(eigvals**n)
         return float(total.real)
 
     def in_interval(val: float) -> bool:
@@ -229,11 +263,14 @@ def algorithm2_from_kraus(
         chosen_radius: float | None = None
         coeff = None
         for radius in distinct_radii:
-            acc = 0 + 0j
+            backend = current_backend()
+            xp = backend.xp
+            acc = xp.zeros((), dtype=backend.complex_dtype)
             for m_idx in range(len(mats)):
                 if abs(radii[m_idx] - radius) <= 1e-10:
-                    acc += sum(lam ** i for lam in periph_eigs[m_idx])
-            if abs(acc) > 1e-10:
+                    if periph_eigs[m_idx]:
+                        acc += xp.sum(xp.stack([lam ** i for lam in periph_eigs[m_idx]]))
+            if float(abs(acc)) > 1e-10:
                 chosen_radius = radius
                 coeff = acc
                 break
