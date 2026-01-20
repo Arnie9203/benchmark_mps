@@ -97,6 +97,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Linear algebra backend for CPU/GPU execution.",
     )
     parser.add_argument(
+        "--torch-device",
+        type=str,
+        help="PyTorch device string (e.g. 'cuda', 'cuda:0', or 'cpu').",
+    )
+    parser.add_argument(
         "--mps-path",
         type=str,
         help="Path to DMRG/TEBD MPS tensors (.npy/.npz) for physical families.",
@@ -127,7 +132,7 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    set_backend(args.backend)
+    set_backend(args.backend, device=args.torch_device)
 
     interval_values = _parse_float_list(args.interval)
     if len(interval_values) != 2:
