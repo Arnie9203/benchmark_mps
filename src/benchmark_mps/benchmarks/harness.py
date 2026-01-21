@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Sequence
 
 import time
 import tracemalloc
@@ -30,6 +30,7 @@ from benchmark_mps.metrics.metrics import (
     compute_tightness,
     materialize_omega,
 )
+from benchmark_mps.utils.backend import convert_kraus_ops
 from benchmark_mps.utils.linalg import peripheral_period, spectral_radius_and_eigs, superop_matrix
 
 
@@ -102,6 +103,7 @@ def run_instance(
     instance: InstanceSpec,
     config: BenchmarkConfig,
 ) -> list[BenchmarkRecord]:
+    kraus_ops = convert_kraus_ops(kraus_ops)
     predicate = PredicateSpec(
         interval=config.interval,
         n_max=config.n_max,
@@ -197,20 +199,11 @@ def run_sweep(
     config: BenchmarkConfig,
 ) -> list[BenchmarkRecord]:
     records: list[BenchmarkRecord] = []
-    generators = list(kraus_generators)
-    total = len(generators)
-    for idx, (instance, kraus_ops) in enumerate(generators, start=1):
-        start = time.perf_counter()
-        print(
-            "Running case "
-            f"{idx}/{total}: "
-            f"{instance.family} "
-            f"bond_dim={instance.bond_dimension} "
-            f"epsilon={instance.epsilon} "
-            f"seed={instance.seed} "
-            f"repeat={instance.repeat}"
-        )
+    generator_list = list(kraus_generators)
+    total = len(generator_list)
+    for idx, (instance, kraus_ops) in enumerate(generator_list, start=1):
+        print(f"Running instance {idx}/{total} ({instance.family})...", end="\r")
         records.extend(run_instance(kraus_ops, instance, config))
-        elapsed = time.perf_counter() - start
-        print(f"Finished case {idx}/{total} in {elapsed:.2f}s")
+    if total:
+        print(" " * 60, end="\r")
     return records
