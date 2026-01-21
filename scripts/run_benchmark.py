@@ -89,7 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--formula",
         type=str,
         default="atom",
-        help="Formula name from the built-in suite.",
+        help="Formula name from the built-in suite or a parsed formula string.",
     )
     parser.add_argument(
         "--formula-suite",
@@ -157,10 +157,19 @@ def main() -> None:
 
     formula_suite = build_formula_suite()
     formula_map = {spec.name: spec.formula for spec in formula_suite}
-    if args.formula not in formula_map:
-        raise SystemExit(f"Unknown formula '{args.formula}'. Options: {', '.join(formula_map)}")
-
-    formulas = formula_suite if args.formula_suite else [FormulaSpec(name=args.formula, formula=formula_map[args.formula])]
+    if args.formula_suite:
+        formulas = formula_suite
+    else:
+        if args.formula in formula_map:
+            formulas = [FormulaSpec(name=args.formula, formula=formula_map[args.formula])]
+        else:
+            try:
+                parsed_formula = parse_formula(args.formula)
+            except ValueError as exc:
+                raise SystemExit(
+                    f"Unknown formula '{args.formula}'. Options: {', '.join(formula_map)} or a valid formula string."
+                ) from exc
+            formulas = [FormulaSpec(name="custom", formula=parsed_formula)]
 
     model_config = _load_model_config(args.model_config)
 
@@ -200,6 +209,12 @@ def main() -> None:
                                 meta={"kraus_rank": spec.kraus_rank},
                             )
                             generators.append((instance, kraus_ops))
+            if args.single_case_index is not None:
+                if args.single_case_index < 0 or args.single_case_index >= len(generators):
+                    raise SystemExit(
+                        f"--single-case-index out of range (0-{len(generators) - 1})."
+                    )
+                generators = [generators[args.single_case_index]]
             records.extend(run_sweep(generators, config))
         elif args.family == "example3":
             kraus_ops = build_example3_kraus()
@@ -210,7 +225,10 @@ def main() -> None:
                 seed=0,
                 repeat=0,
             )
-            records.extend(run_sweep([(instance, kraus_ops)], config))
+            generators = [(instance, kraus_ops)]
+            if args.single_case_index not in (None, 0):
+                raise SystemExit("--single-case-index out of range (0-0).")
+            records.extend(run_sweep(generators, config))
         elif args.family == "aklt":
             epsilons = _parse_float_list(args.epsilons)
             generators = []
@@ -225,6 +243,12 @@ def main() -> None:
                     meta={"scale": args.physical_scale},
                 )
                 generators.append((instance, kraus_ops))
+            if args.single_case_index is not None:
+                if args.single_case_index < 0 or args.single_case_index >= len(generators):
+                    raise SystemExit(
+                        f"--single-case-index out of range (0-{len(generators) - 1})."
+                    )
+                generators = [generators[args.single_case_index]]
             records.extend(run_sweep(generators, config))
         elif args.family == "cluster":
             epsilons = _parse_float_list(args.epsilons)
@@ -240,6 +264,12 @@ def main() -> None:
                     meta={"scale": args.physical_scale},
                 )
                 generators.append((instance, kraus_ops))
+            if args.single_case_index is not None:
+                if args.single_case_index < 0 or args.single_case_index >= len(generators):
+                    raise SystemExit(
+                        f"--single-case-index out of range (0-{len(generators) - 1})."
+                    )
+                generators = [generators[args.single_case_index]]
             records.extend(run_sweep(generators, config))
         else:
             if not args.mps_path and not args.transfer_op_path:

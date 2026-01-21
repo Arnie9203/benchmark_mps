@@ -23,6 +23,18 @@ class Formula:
 
 
 @dataclass(frozen=True)
+class TrueConst(Formula):
+    def size(self) -> int:
+        return 1
+
+    def depth(self) -> int:
+        return 1
+
+    def eval(self, predicate: Sequence[bool]) -> list[bool]:
+        return [True for _ in predicate]
+
+
+@dataclass(frozen=True)
 class Atom(Formula):
     name: str = "atom"
 
@@ -52,6 +64,26 @@ class Not(Formula):
     def eval(self, predicate: Sequence[bool]) -> list[bool]:
         values = self.child.eval(predicate)
         return [not value for value in values]
+
+
+@dataclass(frozen=True)
+class Next(Formula):
+    child: Formula
+
+    def size(self) -> int:
+        return 1 + self.child.size()
+
+    def depth(self) -> int:
+        return 1 + self.child.depth()
+
+    def has_eg(self) -> bool:
+        return self.child.has_eg()
+
+    def eval(self, predicate: Sequence[bool]) -> list[bool]:
+        values = self.child.eval(predicate)
+        if not values:
+            return []
+        return values[1:] + [False]
 
 
 @dataclass(frozen=True)
@@ -92,6 +124,52 @@ class Or(Formula):
         left_vals = self.left.eval(predicate)
         right_vals = self.right.eval(predicate)
         return [l or r for l, r in zip(left_vals, right_vals)]
+
+
+@dataclass(frozen=True)
+class Eventually(Formula):
+    child: Formula
+
+    def size(self) -> int:
+        return 1 + self.child.size()
+
+    def depth(self) -> int:
+        return 1 + self.child.depth()
+
+    def has_eg(self) -> bool:
+        return self.child.has_eg()
+
+    def eval(self, predicate: Sequence[bool]) -> list[bool]:
+        values = self.child.eval(predicate)
+        result = [False] * len(values)
+        running_any = False
+        for idx in range(len(values) - 1, -1, -1):
+            running_any = running_any or values[idx]
+            result[idx] = running_any
+        return result
+
+
+@dataclass(frozen=True)
+class Globally(Formula):
+    child: Formula
+
+    def size(self) -> int:
+        return 1 + self.child.size()
+
+    def depth(self) -> int:
+        return 1 + self.child.depth()
+
+    def has_eg(self) -> bool:
+        return self.child.has_eg()
+
+    def eval(self, predicate: Sequence[bool]) -> list[bool]:
+        values = self.child.eval(predicate)
+        result = [False] * len(values)
+        running_all = True
+        for idx in range(len(values) - 1, -1, -1):
+            running_all = running_all and values[idx]
+            result[idx] = running_all
+        return result
 
 
 @dataclass(frozen=True)

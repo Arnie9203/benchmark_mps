@@ -47,6 +47,10 @@ class BenchmarkConfig:
     tail_window: int = 12
     formula: Formula = Atom()
     formula_name: str = "atom"
+    disable_decomposition: bool = False
+    force_period_one: bool = False
+    disable_certified_radius: bool = False
+    disable_tightening: bool = False
     methods: tuple[BenchmarkMethodConfig, ...] = (
         BenchmarkMethodConfig("alg2"),
         BenchmarkMethodConfig("brute"),
@@ -123,7 +127,13 @@ def run_instance(
             continue
         if method.name == "alg2":
             (omega_plus, omega_minus, info, _), elapsed, peak_mem = _track_memory(
-                algorithm2_from_kraus, kraus_ops, config.interval
+                algorithm2_from_kraus,
+                kraus_ops,
+                config.interval,
+                disable_decomposition=config.disable_decomposition,
+                force_period_one=config.force_period_one,
+                disable_certified_radius=config.disable_certified_radius,
+                disable_tightening=config.disable_tightening,
             )
             result = MethodResult(
                 method="alg2",

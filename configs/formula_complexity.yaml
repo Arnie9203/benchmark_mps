@@ -1,0 +1,136 @@
+runs:
+  - name: formula_easy_f1
+    args:
+      family: synthetic
+      bond_dims: [32]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: atom
+      output: results/formula_easy_f1.jsonl
+  - name: formula_easy_f2
+    args:
+      family: synthetic
+      bond_dims: [32]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "(atom & atom)"
+      output: results/formula_easy_f2.jsonl
+  - name: formula_easy_f3
+    args:
+      family: synthetic
+      bond_dims: [32]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "G (E atom)"
+      output: results/formula_easy_f3.jsonl
+  - name: formula_easy_f4
+    args:
+      family: synthetic
+      bond_dims: [32]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (atom & E atom)"
+      output: results/formula_easy_f4.jsonl
+  - name: formula_easy_f5
+    args:
+      family: synthetic
+      bond_dims: [32]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom | E atom) & X atom)"
+      output: results/formula_easy_f5.jsonl
+  - name: formula_mid_f1
+    args:
+      family: synthetic
+      bond_dims: [64]
+      epsilons: [0.05]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: atom
+      output: results/formula_mid_f1.jsonl
+  - name: formula_mid_f2
+    args:
+      family: synthetic
+      bond_dims: [64]
+      epsilons: [0.05]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "(atom | atom)"
+      output: results/formula_mid_f2.jsonl
+  - name: formula_mid_f3
+    args:
+      family: synthetic
+      bond_dims: [64]
+      epsilons: [0.05]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "E (G atom)"
+      output: results/formula_mid_f3.jsonl
+  - name: formula_mid_f4
+    args:
+      family: synthetic
+      bond_dims: [64]
+      epsilons: [0.05]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (atom & G atom)"
+      output: results/formula_mid_f4.jsonl
+  - name: formula_mid_f5
+    args:
+      family: synthetic
+      bond_dims: [64]
+      epsilons: [0.05]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom & E atom) | X (E atom))"
+      output: results/formula_mid_f5.jsonl
+  - name: formula_hard_f1
+    args:
+      family: synthetic
+      bond_dims: [128]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: atom
+      output: results/formula_hard_f1.jsonl
+  - name: formula_hard_f2
+    args:
+      family: synthetic
+      bond_dims: [128]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "(!atom | atom)"
+      output: results/formula_hard_f2.jsonl
+  - name: formula_hard_f3
+    args:
+      family: synthetic
+      bond_dims: [128]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "G (E (G atom))"
+      output: results/formula_hard_f3.jsonl
+  - name: formula_hard_f4
+    args:
+      family: synthetic
+      bond_dims: [128]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom | E atom))"
+      output: results/formula_hard_f4.jsonl
+  - name: formula_hard_f5
+    args:
+      family: synthetic
+      bond_dims: [128]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom | E atom) & X (E (G atom)))"
+      output: results/formula_hard_f5.jsonl
