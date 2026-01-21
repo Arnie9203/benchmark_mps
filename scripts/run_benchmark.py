@@ -12,6 +12,7 @@ from benchmark_mps.models.examples import build_example3_kraus
 from benchmark_mps.models.physical import aklt_kraus, cluster_kraus
 from benchmark_mps.models.synthetic import SyntheticSpec, generate_synthetic_kraus
 from benchmark_mps.formulas.generator import FormulaSpec, build_formula_suite
+from benchmark_mps.formulas.parser import parse_formula
 
 
 def _parse_int_list(value: str) -> list[int]:
@@ -47,7 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--formula",
         type=str,
         default="atom",
-        help="Formula name from the built-in suite.",
+        help="Formula name from the built-in suite or a parsed formula string.",
     )
     parser.add_argument(
         "--formula-suite",
@@ -63,6 +64,32 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--interval", type=str, default="0.95,1.05", help="Interval a,b.")
     parser.add_argument("--n-max", type=int, default=240)
     parser.add_argument("--tail-window", type=int, default=12)
+    parser.add_argument(
+        "--ablate-decomposition",
+        action="store_true",
+        help="Disable irreducible decomposition in algorithm 2.",
+    )
+    parser.add_argument(
+        "--force-period-one",
+        action="store_true",
+        help="Force peripheral period to 1 in algorithm 2.",
+    )
+    parser.add_argument(
+        "--ablate-certified-radius",
+        action="store_true",
+        help="Disable rho2 certified-radius tail bound in algorithm 2.",
+    )
+    parser.add_argument(
+        "--ablate-tightening",
+        action="store_true",
+        help="Disable tightening via exception checks in algorithm 2.",
+    )
+    parser.add_argument(
+        "--single-case-index",
+        type=int,
+        default=None,
+        help="Run only a single case by index (0-based) within the generated sweep.",
+    )
     parser.add_argument("--output", type=str, default="results/benchmark.jsonl")
     return parser
 
@@ -77,10 +104,19 @@ def main() -> None:
 
     formula_suite = build_formula_suite()
     formula_map = {spec.name: spec.formula for spec in formula_suite}
-    if args.formula not in formula_map:
-        raise SystemExit(f"Unknown formula '{args.formula}'. Options: {', '.join(formula_map)}")
-
-    formulas = formula_suite if args.formula_suite else [FormulaSpec(name=args.formula, formula=formula_map[args.formula])]
+    if args.formula_suite:
+        formulas = formula_suite
+    else:
+        if args.formula in formula_map:
+            formulas = [FormulaSpec(name=args.formula, formula=formula_map[args.formula])]
+        else:
+            try:
+                parsed_formula = parse_formula(args.formula)
+            except ValueError as exc:
+                raise SystemExit(
+                    f"Unknown formula '{args.formula}'. Options: {', '.join(formula_map)} or a valid formula string."
+                ) from exc
+            formulas = [FormulaSpec(name="custom", formula=parsed_formula)]
 
     records = []
     for formula_spec in formulas:
@@ -90,6 +126,10 @@ def main() -> None:
             tail_window=args.tail_window,
             formula=formula_spec.formula,
             formula_name=formula_spec.name,
+            disable_decomposition=args.ablate_decomposition,
+            force_period_one=args.force_period_one,
+            disable_certified_radius=args.ablate_certified_radius,
+            disable_tightening=args.ablate_tightening,
         )
 
         if args.family == "synthetic":
@@ -117,6 +157,12 @@ def main() -> None:
                                 meta={"kraus_rank": spec.kraus_rank},
                             )
                             generators.append((instance, kraus_ops))
+            if args.single_case_index is not None:
+                if args.single_case_index < 0 or args.single_case_index >= len(generators):
+                    raise SystemExit(
+                        f"--single-case-index out of range (0-{len(generators) - 1})."
+                    )
+                generators = [generators[args.single_case_index]]
             records.extend(run_sweep(generators, config))
         elif args.family == "example3":
             kraus_ops = build_example3_kraus()
@@ -127,7 +173,10 @@ def main() -> None:
                 seed=0,
                 repeat=0,
             )
-            records.extend(run_sweep([(instance, kraus_ops)], config))
+            generators = [(instance, kraus_ops)]
+            if args.single_case_index not in (None, 0):
+                raise SystemExit("--single-case-index out of range (0-0).")
+            records.extend(run_sweep(generators, config))
         elif args.family == "aklt":
             epsilons = _parse_float_list(args.epsilons)
             generators = []
@@ -142,6 +191,12 @@ def main() -> None:
                     meta={"scale": args.physical_scale},
                 )
                 generators.append((instance, kraus_ops))
+            if args.single_case_index is not None:
+                if args.single_case_index < 0 or args.single_case_index >= len(generators):
+                    raise SystemExit(
+                        f"--single-case-index out of range (0-{len(generators) - 1})."
+                    )
+                generators = [generators[args.single_case_index]]
             records.extend(run_sweep(generators, config))
         else:
             epsilons = _parse_float_list(args.epsilons)
@@ -157,6 +212,12 @@ def main() -> None:
                     meta={"scale": args.physical_scale},
                 )
                 generators.append((instance, kraus_ops))
+            if args.single_case_index is not None:
+                if args.single_case_index < 0 or args.single_case_index >= len(generators):
+                    raise SystemExit(
+                        f"--single-case-index out of range (0-{len(generators) - 1})."
+                    )
+                generators = [generators[args.single_case_index]]
             records.extend(run_sweep(generators, config))
 
     output_path = Path(args.output)
