@@ -283,9 +283,9 @@ def main() -> None:
             epsilons = _parse_float_list(args.epsilons)
             generators = []
             for epsilon in epsilons:
-                kraus_ops = cluster_kraus(epsilon=epsilon, scale=args.physical_scale)
+                kraus_ops = generator_fn(epsilon=epsilon, scale=args.physical_scale)
                 instance = InstanceSpec(
-                    family="cluster",
+                    family=args.family,
                     bond_dimension=kraus_ops[0].shape[0],
                     epsilon=epsilon,
                     seed=0,
