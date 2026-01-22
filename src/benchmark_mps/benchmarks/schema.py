@@ -23,6 +23,7 @@ class PredicateSpec:
     """Atomic predicate definition for a benchmark run."""
 
     interval: Tuple[float, float]
+    atom_intervals: Dict[str, Tuple[float, float]] = field(default_factory=dict)
     n_max: int
     tail_window: int
     formula_name: str = "atom"

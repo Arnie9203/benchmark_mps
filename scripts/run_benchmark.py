@@ -33,6 +33,25 @@ def _parse_int_list(value: str) -> list[int]:
 def _parse_float_list(value: str) -> list[float]:
     return [float(item.strip()) for item in value.split(",") if item.strip()]
 
+def _parse_atom_intervals(value: str) -> dict[str, tuple[float, float]]:
+    intervals: dict[str, tuple[float, float]] = {}
+    for entry in value.split(";"):
+        entry = entry.strip()
+        if not entry:
+            continue
+        if "=" not in entry:
+            raise SystemExit(
+                "--atom-intervals entries must be formatted as name=a,b;name2=c,d"
+            )
+        name, interval_text = entry.split("=", maxsplit=1)
+        name = name.strip()
+        interval_values = _parse_float_list(interval_text)
+        if len(interval_values) != 2:
+            raise SystemExit(f"--atom-intervals for '{name}' must be two floats")
+        intervals[name] = (interval_values[0], interval_values[1])
+    if not intervals:
+        raise SystemExit("--atom-intervals did not parse any intervals")
+    return intervals
 
 def _parse_methods(value: str | None) -> tuple[BenchmarkMethodConfig, ...]:
     if not value:
@@ -97,6 +116,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run all built-in formulas for complexity sweeps.",
     )
     parser.add_argument(
+        "--atom-intervals",
+        type=str,
+        default=None,
+        help="Optional atom intervals mapping: name=a,b;name2=c,d",
+    )
+    parser.add_argument(
         "--physical-scale",
         type=int,
         default=1,
@@ -154,6 +179,9 @@ def main() -> None:
     interval_values = _parse_float_list(args.interval)
     if len(interval_values) != 2:
         raise SystemExit("--interval must be two comma-separated floats")
+    atom_intervals = None
+    if args.atom_intervals:
+        atom_intervals = _parse_atom_intervals(args.atom_intervals)
 
     formula_suite = build_formula_suite()
     formula_map = {spec.name: spec.formula for spec in formula_suite}
@@ -177,6 +205,7 @@ def main() -> None:
     for formula_spec in formulas:
         config = BenchmarkConfig(
             interval=(interval_values[0], interval_values[1]),
+            atom_intervals=atom_intervals,
             n_max=args.n_max,
             tail_window=args.tail_window,
             formula=formula_spec.formula,
