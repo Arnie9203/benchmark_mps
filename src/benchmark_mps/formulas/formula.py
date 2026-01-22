@@ -33,12 +33,8 @@ class TrueConst(Formula):
     def depth(self) -> int:
         return 1
 
-    def atoms(self) -> set[str]:
-        return set()
-
-    def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
-        length = len(next(iter(predicates.values()), []))
-        return [True for _ in range(length)]
+    def eval(self, predicate: Sequence[bool]) -> list[bool]:
+        return [True for _ in predicate]
 
 
 @dataclass(frozen=True)
@@ -79,6 +75,95 @@ class Not(Formula):
     def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
         values = self.child.eval(predicates)
         return [not value for value in values]
+
+
+@dataclass(frozen=True)
+class Next(Formula):
+    child: Formula
+
+    def size(self) -> int:
+        return 1 + self.child.size()
+
+    def depth(self) -> int:
+        return 1 + self.child.depth()
+
+    def has_eg(self) -> bool:
+        return self.child.has_eg()
+
+    def eval(self, predicate: Sequence[bool]) -> list[bool]:
+        values = self.child.eval(predicate)
+        if not values:
+            return []
+        return values[1:] + [False]
+
+
+@dataclass(frozen=True)
+class Next(Formula):
+    child: Formula
+
+    def size(self) -> int:
+        return 1 + self.child.size()
+
+    def depth(self) -> int:
+        return 1 + self.child.depth()
+
+    def has_eg(self) -> bool:
+        return self.child.has_eg()
+
+    def atoms(self) -> set[str]:
+        return self.child.atoms()
+
+    def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
+        values = self.child.eval(predicates)
+        if not values:
+            return []
+        return values[1:] + [False]
+
+
+@dataclass(frozen=True)
+class Next(Formula):
+    child: Formula
+
+    def size(self) -> int:
+        return 1 + self.child.size()
+
+    def depth(self) -> int:
+        return 1 + self.child.depth()
+
+    def has_eg(self) -> bool:
+        return self.child.has_eg()
+
+    def atoms(self) -> set[str]:
+        return self.child.atoms()
+
+    def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
+        values = self.child.eval(predicates)
+        if not values:
+            return []
+        return values[1:] + [False]
+
+
+@dataclass(frozen=True)
+class Next(Formula):
+    child: Formula
+
+    def size(self) -> int:
+        return 1 + self.child.size()
+
+    def depth(self) -> int:
+        return 1 + self.child.depth()
+
+    def has_eg(self) -> bool:
+        return self.child.has_eg()
+
+    def atoms(self) -> set[str]:
+        return self.child.atoms()
+
+    def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
+        values = self.child.eval(predicates)
+        if not values:
+            return []
+        return values[1:] + [False]
 
 
 @dataclass(frozen=True)
@@ -163,11 +248,8 @@ class Eventually(Formula):
     def has_eg(self) -> bool:
         return self.child.has_eg()
 
-    def atoms(self) -> set[str]:
-        return self.child.atoms()
-
-    def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
-        values = self.child.eval(predicates)
+    def eval(self, predicate: Sequence[bool]) -> list[bool]:
+        values = self.child.eval(predicate)
         result = [False] * len(values)
         running_any = False
         for idx in range(len(values) - 1, -1, -1):
@@ -189,11 +271,8 @@ class Globally(Formula):
     def has_eg(self) -> bool:
         return self.child.has_eg()
 
-    def atoms(self) -> set[str]:
-        return self.child.atoms()
-
-    def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
-        values = self.child.eval(predicates)
+    def eval(self, predicate: Sequence[bool]) -> list[bool]:
+        values = self.child.eval(predicate)
         result = [False] * len(values)
         running_all = True
         for idx in range(len(values) - 1, -1, -1):
