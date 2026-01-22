@@ -1,151 +1,136 @@
 runs:
-  - name: formula_easy_f1_corr
+  - name: formula_easy_f1
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [32]
       epsilons: [0.0]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: corr
-      output: results/formula_easy_f1_corr.jsonl
-  - name: formula_easy_f2_gap
+      formula: atom
+      output: results/formula_easy_f1.jsonl
+  - name: formula_easy_f2
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [32]
       epsilons: [0.0]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G gap"
-      output: results/formula_easy_f2_gap.jsonl
-  - name: formula_easy_f3_corr_decay
+      formula: "(atom & atom)"
+      output: results/formula_easy_f2.jsonl
+  - name: formula_easy_f3
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [32]
       epsilons: [0.0]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "EG corr"
-      output: results/formula_easy_f3_corr_decay.jsonl
-  - name: formula_easy_f4_stab
+      formula: "G (E atom)"
+      output: results/formula_easy_f3.jsonl
+  - name: formula_easy_f4
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [32]
       epsilons: [0.0]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G stab"
-      output: results/formula_easy_f4_stab.jsonl
-  - name: formula_easy_f5_ghz_combo
+      formula: "EG (atom & E atom)"
+      output: results/formula_easy_f4.jsonl
+  - name: formula_easy_f5
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [32]
       epsilons: [0.0]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G (mag0 & endz)"
-      output: results/formula_easy_f5_ghz_combo.jsonl
-  - name: formula_mid_f1_corr
+      formula: "EG (G (atom | E atom) & X atom)"
+      output: results/formula_easy_f5.jsonl
+  - name: formula_mid_f1
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [64]
       epsilons: [0.05]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: corr
-      output: results/formula_mid_f1_corr.jsonl
-  - name: formula_mid_f2_gap
+      formula: atom
+      output: results/formula_mid_f1.jsonl
+  - name: formula_mid_f2
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [64]
       epsilons: [0.05]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G gap"
-      output: results/formula_mid_f2_gap.jsonl
-  - name: formula_mid_f3_corr_decay
+      formula: "(atom | atom)"
+      output: results/formula_mid_f2.jsonl
+  - name: formula_mid_f3
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [64]
       epsilons: [0.05]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "EG corr"
-      output: results/formula_mid_f3_corr_decay.jsonl
-  - name: formula_mid_f4_stab
+      formula: "E (G atom)"
+      output: results/formula_mid_f3.jsonl
+  - name: formula_mid_f4
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [64]
       epsilons: [0.05]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G stab"
-      output: results/formula_mid_f4_stab.jsonl
-  - name: formula_mid_f5_ghz_combo
+      formula: "EG (atom & G atom)"
+      output: results/formula_mid_f4.jsonl
+  - name: formula_mid_f5
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [64]
       epsilons: [0.05]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G (mag0 & endz)"
-      output: results/formula_mid_f5_ghz_combo.jsonl
-  - name: formula_hard_f1_corr
+      formula: "EG (G (atom & E atom) | X (E atom))"
+      output: results/formula_mid_f5.jsonl
+  - name: formula_hard_f1
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [128]
       epsilons: [0.1]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: corr
-      output: results/formula_hard_f1_corr.jsonl
-  - name: formula_hard_f2_gap
+      formula: atom
+      output: results/formula_hard_f1.jsonl
+  - name: formula_hard_f2
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [128]
       epsilons: [0.1]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G gap"
-      output: results/formula_hard_f2_gap.jsonl
-  - name: formula_hard_f3_corr_decay
+      formula: "(!atom | atom)"
+      output: results/formula_hard_f2.jsonl
+  - name: formula_hard_f3
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [128]
       epsilons: [0.1]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "EG corr"
-      output: results/formula_hard_f3_corr_decay.jsonl
-  - name: formula_hard_f4_stab
+      formula: "G (E (G atom))"
+      output: results/formula_hard_f3.jsonl
+  - name: formula_hard_f4
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [128]
       epsilons: [0.1]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G stab"
-      output: results/formula_hard_f4_stab.jsonl
-  - name: formula_hard_f5_ghz_combo
+      formula: "EG (G (atom | E atom))"
+      output: results/formula_hard_f4.jsonl
+  - name: formula_hard_f5
     args:
       family: synthetic
-      bond_dims: [16]
+      bond_dims: [128]
       epsilons: [0.1]
       seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
       repeats: [0]
-      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1;stab=0.95,1.05;mag0=-0.05,0.05;endz=0.9,1.1"
-      formula: "G (mag0 & endz)"
-      output: results/formula_hard_f5_ghz_combo.jsonl
+      formula: "EG (G (atom | E atom) & X (E (G atom)))"
+      output: results/formula_hard_f5.jsonl
