@@ -9,6 +9,7 @@ authors = [{ name = "Benchmark MPS" }]
 
 dependencies = [
   "numpy>=1.24",
+  "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
