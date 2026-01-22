@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Sequence
 
 import time
 import tracemalloc
@@ -30,6 +30,7 @@ from benchmark_mps.metrics.metrics import (
     compute_tightness,
     materialize_omega,
 )
+from benchmark_mps.utils.backend import convert_kraus_ops
 from benchmark_mps.utils.linalg import peripheral_period, spectral_radius_and_eigs, superop_matrix
 
 
@@ -47,7 +48,6 @@ class BenchmarkConfig:
     tail_window: int = 12
     formula: Formula = Atom()
     formula_name: str = "atom"
-    primary_atom: str = "atom"
     disable_decomposition: bool = False
     force_period_one: bool = False
     disable_certified_radius: bool = False
@@ -147,13 +147,7 @@ def run_instance(
     instance: InstanceSpec,
     config: BenchmarkConfig,
 ) -> list[BenchmarkRecord]:
-    atom_intervals = _resolve_atom_intervals(config)
-    formula_atoms = config.formula.atoms()
-    missing_atoms = formula_atoms - atom_intervals.keys()
-    if missing_atoms:
-        missing = ", ".join(sorted(missing_atoms))
-        raise ValueError(f"Missing interval definitions for atoms: {missing}")
-    primary_atom = _resolve_primary_atom(config.primary_atom, atom_intervals)
+    kraus_ops = convert_kraus_ops(kraus_ops)
     predicate = PredicateSpec(
         interval=atom_intervals.get(primary_atom, config.interval),
         atom_intervals=atom_intervals,
@@ -175,31 +169,14 @@ def run_instance(
         if not method.enabled:
             continue
         if method.name == "alg2":
-            def _run_alg2_for_atoms():
-                results: dict[str, tuple[list[int], dict[int, dict[str, object]], dict]] = {}
-                for name, interval in atom_intervals.items():
-                    omega_plus, omega_minus, info, _ = algorithm2_from_kraus(
-                        kraus_ops,
-                        interval,
-                        disable_decomposition=config.disable_decomposition,
-                        force_period_one=config.force_period_one,
-                        disable_certified_radius=config.disable_certified_radius,
-                        disable_tightening=config.disable_tightening,
-                    )
-                    results[name] = (list(omega_plus), omega_minus, info)
-                return results
-
-            alg2_results, elapsed, peak_mem = _track_memory(_run_alg2_for_atoms)
-            primary_result = alg2_results[primary_atom]
-            omega_plus, omega_minus, info = primary_result
-            alg2_omega_data = {
-                name: (res[0], res[1]) for name, res in alg2_results.items()
-            }
-            kappa_by_atom = {name: res[2]["kappa"] for name, res in alg2_results.items()}
-            method_predicates = _materialize_predicates(
-                config.n_max,
-                alg2_omega_data,
-                kappa_by_atom,
+            (omega_plus, omega_minus, info, _), elapsed, peak_mem = _track_memory(
+                algorithm2_from_kraus,
+                kraus_ops,
+                config.interval,
+                disable_decomposition=config.disable_decomposition,
+                force_period_one=config.force_period_one,
+                disable_certified_radius=config.disable_certified_radius,
+                disable_tightening=config.disable_tightening,
             )
             result = MethodResult(
                 method="alg2",
@@ -300,20 +277,11 @@ def run_sweep(
     config: BenchmarkConfig,
 ) -> list[BenchmarkRecord]:
     records: list[BenchmarkRecord] = []
-    generators = list(kraus_generators)
-    total = len(generators)
-    for idx, (instance, kraus_ops) in enumerate(generators, start=1):
-        start = time.perf_counter()
-        print(
-            "Running case "
-            f"{idx}/{total}: "
-            f"{instance.family} "
-            f"bond_dim={instance.bond_dimension} "
-            f"epsilon={instance.epsilon} "
-            f"seed={instance.seed} "
-            f"repeat={instance.repeat}"
-        )
+    generator_list = list(kraus_generators)
+    total = len(generator_list)
+    for idx, (instance, kraus_ops) in enumerate(generator_list, start=1):
+        print(f"Running instance {idx}/{total} ({instance.family})...", end="\r")
         records.extend(run_instance(kraus_ops, instance, config))
-        elapsed = time.perf_counter() - start
-        print(f"Finished case {idx}/{total} in {elapsed:.2f}s")
+    if total:
+        print(" " * 60, end="\r")
     return records
