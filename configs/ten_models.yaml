@@ -1,0 +1,86 @@
+runs:
+  - name: artificial_a1_short_range
+    args:
+      family: synthetic
+      bond_dims: [8]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      atom_intervals: "corr=0.0,0.2;mag0=-0.05,0.05"
+      formula: "EG corr"
+      output: results/ten_models_artificial_a1.jsonl
+  - name: artificial_a2_near_critical
+    args:
+      family: synthetic
+      bond_dims: [8]
+      epsilons: [0.05]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      atom_intervals: "corr=0.0,0.2"
+      formula: "EG corr"
+      output: results/ten_models_artificial_a2.jsonl
+  - name: artificial_a3_cat_like
+    args:
+      family: synthetic
+      bond_dims: [5]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      atom_intervals: "uniform=0.9,1.1;alt=0.9,1.1"
+      formula: "EG (uniform & alt)"
+      output: results/ten_models_artificial_a3.jsonl
+  - name: artificial_a4_oscillatory
+    args:
+      family: synthetic
+      bond_dims: [8]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      atom_intervals: "odd_even=0.9,1.1"
+      formula: "G (odd_even & X odd_even)"
+      output: results/ten_models_artificial_a4.jsonl
+  - name: artificial_a5_noise_robust
+    args:
+      family: synthetic
+      bond_dims: [16]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      atom_intervals: "stab=0.8,1.05"
+      formula: "G stab"
+      output: results/ten_models_artificial_a5.jsonl
+  - name: physical_p1_aklt
+    args:
+      family: aklt
+      epsilons: [0.5, 0.25, 0.125]
+      atom_intervals: "corr=0.0,0.2;gap=0.9,1.1"
+      formula: "EG corr"
+      output: results/ten_models_physical_aklt.jsonl
+  - name: physical_p2_cluster
+    args:
+      family: cluster
+      epsilons: [0.5, 0.25, 0.125]
+      atom_intervals: "stab=0.95,1.05"
+      formula: "G stab"
+      output: results/ten_models_physical_cluster.jsonl
+  - name: physical_p3_ghz
+    args:
+      family: ghz
+      epsilons: [0.0]
+      atom_intervals: "mag0=-0.05,0.05;endz=0.9,1.1"
+      formula: "G (mag0 & endz)"
+      output: results/ten_models_physical_ghz.jsonl
+  - name: physical_p4_fredkin
+    args:
+      family: fredkin
+      epsilons: [0.0]
+      atom_intervals: "corr=0.0,0.2"
+      formula: "EG corr"
+      output: results/ten_models_physical_fredkin.jsonl
+  - name: physical_p5_motzkin
+    args:
+      family: motzkin
+      epsilons: [0.0]
+      atom_intervals: "flat=0.95,1.05"
+      formula: "EG flat"
+      output: results/ten_models_physical_motzkin.jsonl

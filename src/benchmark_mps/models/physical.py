@@ -1,4 +1,4 @@
-"""Physical-model MPS generators (AKLT, cluster)."""
+"""Physical-model MPS generators (AKLT, cluster, and toy reference states)."""
 
 from __future__ import annotations
 
@@ -44,6 +44,31 @@ def cluster_kraus(epsilon: float = 0.0, scale: int = 1) -> list[np.ndarray]:
     inv_sqrt2 = 1 / np.sqrt(2)
     a0 = inv_sqrt2 * np.array([[1, 0], [1, 0]], dtype=complex)
     a1 = inv_sqrt2 * np.array([[0, 1], [0, -1]], dtype=complex)
+    kraus = [a0, a1]
+    kraus = _block_diagonal_repeat(kraus, scale)
+    return _mix_with_identity(kraus, epsilon)
+
+
+def ghz_kraus(epsilon: float = 0.0, scale: int = 1) -> list[np.ndarray]:
+    a0 = np.array([[1, 0], [0, 0]], dtype=complex)
+    a1 = np.array([[0, 0], [0, 1]], dtype=complex)
+    kraus = [a0, a1]
+    kraus = _block_diagonal_repeat(kraus, scale)
+    return _mix_with_identity(kraus, epsilon)
+
+
+def fredkin_kraus(epsilon: float = 0.0, scale: int = 1) -> list[np.ndarray]:
+    a0 = np.diag([1, 0, 0]).astype(complex)
+    a1 = np.diag([0, 1, 0]).astype(complex)
+    a2 = np.diag([0, 0, 1]).astype(complex)
+    kraus = [a0, a1, a2]
+    kraus = _block_diagonal_repeat(kraus, scale)
+    return _mix_with_identity(kraus, epsilon)
+
+
+def motzkin_kraus(epsilon: float = 0.0, scale: int = 1) -> list[np.ndarray]:
+    a0 = np.diag([1, 1, 0, 0]).astype(complex)
+    a1 = np.diag([0, 0, 1, 1]).astype(complex)
     kraus = [a0, a1]
     kraus = _block_diagonal_repeat(kraus, scale)
     return _mix_with_identity(kraus, epsilon)
