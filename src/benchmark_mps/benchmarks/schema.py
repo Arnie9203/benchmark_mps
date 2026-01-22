@@ -25,6 +25,7 @@ class PredicateSpec:
     interval: Tuple[float, float]
     n_max: int
     tail_window: int
+    atom_intervals: Dict[str, Tuple[float, float]] = field(default_factory=dict)
     formula_name: str = "atom"
     formula_size: int = 1
     formula_depth: int = 1

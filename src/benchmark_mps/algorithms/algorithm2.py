@@ -177,9 +177,17 @@ def algorithm2_from_kraus(
     kraus_ops: Sequence[np.ndarray],
     interval: tuple[float, float],
     tol_periph: float = 1e-10,
+    disable_decomposition: bool = False,
+    force_period_one: bool = False,
+    disable_certified_radius: bool = False,
+    disable_tightening: bool = False,
 ) -> tuple[set[int], Dict[int, Dict[str, int | list[int] | None]], Dict[str, object], callable]:
     a, b = interval
-    blocks = decompose_irreducible_by_support(kraus_ops)
+    if disable_decomposition:
+        dim = kraus_ops[0].shape[0]
+        blocks = [np.eye(dim, dtype=complex)]
+    else:
+        blocks = decompose_irreducible_by_support(kraus_ops)
     blocks_kraus = [restrict_kraus(kraus_ops, block) for block in blocks]
 
     for idx, block in enumerate(blocks):
@@ -195,12 +203,12 @@ def algorithm2_from_kraus(
         mat = superop_matrix(sub_ops)
         mats.append(mat)
         radius, eigvals = spectral_radius_and_eigs(mat)
-        period = peripheral_period(eigvals, radius, tol=tol_periph)
+        period = 1 if force_period_one else peripheral_period(eigvals, radius, tol=tol_periph)
         radii.append(radius)
         periods.append(period)
         eigs_list.append(eigvals)
 
-    kappa = lcm_list(periods)
+    kappa = 1 if force_period_one else lcm_list(periods)
     distinct_radii = sorted({round(val, 12) for val in radii}, reverse=True)
 
     periph_eigs: list[list[np.ndarray]] = []
@@ -250,7 +258,7 @@ def algorithm2_from_kraus(
 
         omega_plus.add(i)
 
-        if nonperiph_mods:
+        if nonperiph_mods and not disable_certified_radius:
             rho2 = float(max(nonperiph_mods))
             count2 = len(nonperiph_mods)
         else:
@@ -264,21 +272,22 @@ def algorithm2_from_kraus(
             return count2 * (rho2**n)
 
         threshold = None
-        t = 0
-        while True:
-            n = i + t * kappa
-            if n <= 0:
+        if not disable_certified_radius:
+            t = 0
+            while True:
+                n = i + t * kappa
+                if n <= 0:
+                    t += 1
+                    continue
+                if tail_bound(n) < target:
+                    threshold = n
+                    break
+                if n > 5000:
+                    break
                 t += 1
-                continue
-            if tail_bound(n) < target:
-                threshold = n
-                break
-            if n > 5000:
-                break
-            t += 1
 
         exceptions: list[int] = []
-        if threshold is not None:
+        if threshold is not None and not disable_tightening:
             for n in range(i, threshold, kappa):
                 if n > 0 and in_interval(gamma(n)):
                     exceptions.append(n)
