@@ -173,6 +173,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    if not hasattr(args, "single_case_index"):
+        setattr(args, "single_case_index", None)
 
     set_backend(args.backend, device=args.torch_device)
 
