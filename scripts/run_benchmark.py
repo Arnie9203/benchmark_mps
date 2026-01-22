@@ -173,6 +173,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    if not hasattr(args, "single_case_index"):
+        setattr(args, "single_case_index", None)
 
     set_backend(args.backend, device=args.torch_device)
 
@@ -283,9 +285,9 @@ def main() -> None:
             epsilons = _parse_float_list(args.epsilons)
             generators = []
             for epsilon in epsilons:
-                kraus_ops = cluster_kraus(epsilon=epsilon, scale=args.physical_scale)
+                kraus_ops = generator_fn(epsilon=epsilon, scale=args.physical_scale)
                 instance = InstanceSpec(
-                    family="cluster",
+                    family=args.family,
                     bond_dimension=kraus_ops[0].shape[0],
                     epsilon=epsilon,
                     seed=0,
