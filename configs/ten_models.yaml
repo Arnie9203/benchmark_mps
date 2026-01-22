@@ -1,0 +1,115 @@
+runs:
+  - name: artificial_a1_f1
+    args:
+      family: synthetic
+      bond_dims: [16]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: atom
+      output: results/ten_models_a1_f1.jsonl
+  - name: artificial_a1_f5
+    args:
+      family: synthetic
+      bond_dims: [16]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom | E atom) & X (E atom))"
+      output: results/ten_models_a1_f5.jsonl
+  - name: artificial_a2_f1
+    args:
+      family: synthetic
+      bond_dims: [32]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: atom
+      output: results/ten_models_a2_f1.jsonl
+  - name: artificial_a2_f5
+    args:
+      family: synthetic
+      bond_dims: [32]
+      epsilons: [0.0]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom | E atom) & X (E atom))"
+      output: results/ten_models_a2_f5.jsonl
+  - name: artificial_a3_f1
+    args:
+      family: synthetic
+      bond_dims: [64]
+      epsilons: [0.05]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: atom
+      output: results/ten_models_a3_f1.jsonl
+  - name: artificial_a3_f5
+    args:
+      family: synthetic
+      bond_dims: [64]
+      epsilons: [0.05]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom | E atom) & X (E atom))"
+      output: results/ten_models_a3_f5.jsonl
+  - name: artificial_a4_f1
+    args:
+      family: synthetic
+      bond_dims: [96]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: atom
+      output: results/ten_models_a4_f1.jsonl
+  - name: artificial_a4_f5
+    args:
+      family: synthetic
+      bond_dims: [96]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom | E atom) & X (E atom))"
+      output: results/ten_models_a4_f5.jsonl
+  - name: artificial_a5_f1
+    args:
+      family: synthetic
+      bond_dims: [128]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: atom
+      output: results/ten_models_a5_f1.jsonl
+  - name: artificial_a5_f5
+    args:
+      family: synthetic
+      bond_dims: [128]
+      epsilons: [0.1]
+      seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      repeats: [0]
+      formula: "EG (G (atom | E atom) & X (E atom))"
+      output: results/ten_models_a5_f5.jsonl
+  - name: aklt_f1
+    args:
+      family: aklt
+      epsilons: [0.5, 0.25, 0.125]
+      formula: atom
+      output: results/ten_models_aklt_f1.jsonl
+  - name: aklt_f5
+    args:
+      family: aklt
+      epsilons: [0.5, 0.25, 0.125]
+      formula: "EG (G (atom | E atom) & X (E atom))"
+      output: results/ten_models_aklt_f5.jsonl
+  - name: cluster_f1
+    args:
+      family: cluster
+      epsilons: [0.5, 0.25, 0.125]
+      formula: atom
+      output: results/ten_models_cluster_f1.jsonl
+  - name: cluster_f5
+    args:
+      family: cluster
+      epsilons: [0.5, 0.25, 0.125]
+      formula: "EG (G (atom | E atom) & X (E atom))"
+      output: results/ten_models_cluster_f5.jsonl
