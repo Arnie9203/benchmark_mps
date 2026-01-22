@@ -190,6 +190,29 @@ class Next(Formula):
 
 
 @dataclass(frozen=True)
+class Next(Formula):
+    child: Formula
+
+    def size(self) -> int:
+        return 1 + self.child.size()
+
+    def depth(self) -> int:
+        return 1 + self.child.depth()
+
+    def has_eg(self) -> bool:
+        return self.child.has_eg()
+
+    def atoms(self) -> set[str]:
+        return self.child.atoms()
+
+    def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
+        values = self.child.eval(predicates)
+        if not values:
+            return []
+        return values[1:] + [False]
+
+
+@dataclass(frozen=True)
 class And(Formula):
     left: Formula
     right: Formula
