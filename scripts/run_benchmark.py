@@ -23,6 +23,7 @@ from benchmark_mps.models.physical import (
 )
 from benchmark_mps.models.synthetic import SyntheticSpec, generate_synthetic_kraus
 from benchmark_mps.formulas.generator import FormulaSpec, build_formula_suite
+from benchmark_mps.formulas.parser import parse_formula
 from benchmark_mps.utils.backend import set_backend
 
 
@@ -32,6 +33,7 @@ def _parse_int_list(value: str) -> list[int]:
 
 def _parse_float_list(value: str) -> list[float]:
     return [float(item.strip()) for item in value.split(",") if item.strip()]
+
 
 def _parse_atom_intervals(value: str) -> dict[str, tuple[float, float]]:
     intervals: dict[str, tuple[float, float]] = {}
@@ -165,6 +167,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--methods",
         type=str,
         help="Comma-separated list of methods to run (alg2, brute, schur).",
+    )
+    parser.add_argument(
+        "--single-case-index",
+        type=int,
+        default=None,
+        help="Run a single generated instance by index (0-based).",
     )
     parser.add_argument("--output", type=str, default="results/benchmark.jsonl")
     return parser

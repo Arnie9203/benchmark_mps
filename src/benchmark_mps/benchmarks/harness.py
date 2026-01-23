@@ -148,6 +148,12 @@ def run_instance(
     config: BenchmarkConfig,
 ) -> list[BenchmarkRecord]:
     kraus_ops = convert_kraus_ops(kraus_ops)
+    atom_intervals = _resolve_atom_intervals(config)
+    formula_atoms = config.formula.atoms()
+    primary_atom = _resolve_primary_atom(
+        next(iter(formula_atoms), "atom"),
+        atom_intervals,
+    )
     predicate = PredicateSpec(
         interval=atom_intervals.get(primary_atom, config.interval),
         atom_intervals=atom_intervals,
@@ -184,6 +190,12 @@ def run_instance(
                 omega_minus=omega_minus,
                 stats=MethodStats(runtime_s=elapsed, peak_mem_mb=peak_mem),
                 diagnostics=info,
+            )
+            omega_data = {primary_atom: (sorted(omega_plus), omega_minus)}
+            method_predicates = _materialize_predicates(
+                config.n_max,
+                omega_data,
+                info["kappa"],
             )
             metrics = _build_metrics(
                 config.n_max,
