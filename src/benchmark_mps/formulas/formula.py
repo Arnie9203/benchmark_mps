@@ -36,6 +36,9 @@ class TrueConst(Formula):
     def eval(self, predicate: Sequence[bool]) -> list[bool]:
         return [True for _ in predicate]
 
+    def atoms(self) -> set[str]:
+        return set()
+
 
 @dataclass(frozen=True)
 class Atom(Formula):
@@ -89,6 +92,9 @@ class Next(Formula):
 
     def has_eg(self) -> bool:
         return self.child.has_eg()
+
+    def atoms(self) -> set[str]:
+        return self.child.atoms()
 
     def eval(self, predicate: Sequence[bool]) -> list[bool]:
         values = self.child.eval(predicate)
@@ -179,6 +185,9 @@ class Eventually(Formula):
     def has_eg(self) -> bool:
         return self.child.has_eg()
 
+    def atoms(self) -> set[str]:
+        return self.child.atoms()
+
     def eval(self, predicate: Sequence[bool]) -> list[bool]:
         values = self.child.eval(predicate)
         result = [False] * len(values)
@@ -201,6 +210,9 @@ class Globally(Formula):
 
     def has_eg(self) -> bool:
         return self.child.has_eg()
+
+    def atoms(self) -> set[str]:
+        return self.child.atoms()
 
     def eval(self, predicate: Sequence[bool]) -> list[bool]:
         values = self.child.eval(predicate)
