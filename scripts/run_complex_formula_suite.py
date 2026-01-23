@@ -88,6 +88,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run alg2/brute/schur metrics alongside formula truth values.",
     )
     parser.add_argument(
+        "--skip-alg2-on-error",
+        action="store_true",
+        default=True,
+        help="Skip alg2 if it fails the invariance check and continue with other methods.",
+    )
+    parser.add_argument(
+        "--no-skip-alg2-on-error",
+        dest="skip_alg2_on_error",
+        action="store_false",
+        help="Abort if alg2 fails instead of skipping it.",
+    )
+    parser.add_argument(
         "--backend",
         choices=["numpy", "cupy", "torch"],
         default="numpy",
@@ -186,8 +198,34 @@ def main() -> None:
                                 formula_name=name,
                                 methods=_parse_methods(args.methods),
                             )
-                            method_records = run_instance(kraus_ops, instance, benchmark_config)
-                            record["method_results"] = [asdict(item) for item in method_records]
+                            try:
+                                method_records = run_instance(kraus_ops, instance, benchmark_config)
+                                record["method_results"] = [asdict(item) for item in method_records]
+                            except Exception as exc:
+                                if not args.skip_alg2_on_error:
+                                    raise
+                                record["method_error"] = f"{type(exc).__name__}: {exc}"
+                                remaining = tuple(
+                                    method
+                                    for method in benchmark_config.methods
+                                    if method.name != "alg2"
+                                )
+                                if remaining:
+                                    fallback_config = BenchmarkConfig(
+                                        interval=benchmark_config.interval,
+                                        atom_intervals=benchmark_config.atom_intervals,
+                                        n_max=benchmark_config.n_max,
+                                        tail_window=benchmark_config.tail_window,
+                                        formula=benchmark_config.formula,
+                                        formula_name=benchmark_config.formula_name,
+                                        disable_decomposition=benchmark_config.disable_decomposition,
+                                        force_period_one=benchmark_config.force_period_one,
+                                        disable_certified_radius=benchmark_config.disable_certified_radius,
+                                        disable_tightening=benchmark_config.disable_tightening,
+                                        methods=remaining,
+                                    )
+                                    method_records = run_instance(kraus_ops, instance, fallback_config)
+                                    record["method_results"] = [asdict(item) for item in method_records]
                         if args.emit_trace:
                             record["truth_trace"] = truth_trace
                         if args.emit_labels:

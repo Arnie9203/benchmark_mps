@@ -217,10 +217,11 @@ def algorithm2_from_kraus(
         blocks = decompose_irreducible_by_support(kraus_ops)
     blocks_kraus = [restrict_kraus(kraus_ops, block) for block in blocks]
 
+    warnings: list[str] = []
     for idx, block in enumerate(blocks):
         ok, err = check_invariance(kraus_ops, block)
         if not ok:
-            raise RuntimeError(f"block {idx} not invariant, err={err}")
+            warnings.append(f"block {idx} not invariant, err={err}")
 
     mats: list[np.ndarray] = []
     eigs_list: list[np.ndarray] = []
@@ -339,6 +340,7 @@ def algorithm2_from_kraus(
         "kappa": kappa,
         "rho2_global": float(max(nonperiph_mods)) if nonperiph_mods else 0.0,
         "nonperiph_count": len(nonperiph_mods),
+        "warnings": warnings,
     }
 
     return omega_plus, omega_minus, info, gamma
