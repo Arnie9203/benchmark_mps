@@ -11,6 +11,7 @@ from benchmark_mps.formulas.formula import (
     Eventually,
     Formula,
     Globally,
+    Implies,
     Next,
     Not,
     Or,
@@ -31,6 +32,10 @@ def _tokenize(text: str) -> list[Token]:
         char = text[idx]
         if char.isspace():
             idx += 1
+            continue
+        if char == "-" and idx + 1 < len(text) and text[idx + 1] == ">":
+            tokens.append(Token(kind="IMPLIES", value="->"))
+            idx += 2
             continue
         if char in ("(", ")", "!", "&", "|"):
             tokens.append(Token(kind=char, value=char))
@@ -67,10 +72,19 @@ class _Parser:
         return token
 
     def parse(self) -> Formula:
-        expr = self._parse_or()
+        expr = self._parse_implies()
         if self._peek() is not None:
             token = self._peek()
             raise ValueError(f"Unexpected token '{token.value}'")
+        return expr
+
+    def _parse_implies(self) -> Formula:
+        expr = self._parse_or()
+        token = self._peek()
+        if token is not None and token.kind == "IMPLIES":
+            self._consume("IMPLIES")
+            rhs = self._parse_implies()
+            return Implies(expr, rhs)
         return expr
 
     def _parse_or(self) -> Formula:
