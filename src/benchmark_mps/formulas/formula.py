@@ -144,6 +144,29 @@ class Or(Formula):
 
 
 @dataclass(frozen=True)
+class Implies(Formula):
+    left: Formula
+    right: Formula
+
+    def size(self) -> int:
+        return 1 + self.left.size() + self.right.size()
+
+    def depth(self) -> int:
+        return 1 + max(self.left.depth(), self.right.depth())
+
+    def has_eg(self) -> bool:
+        return self.left.has_eg() or self.right.has_eg()
+
+    def atoms(self) -> set[str]:
+        return self.left.atoms() | self.right.atoms()
+
+    def eval(self, predicates: Mapping[str, Sequence[bool]]) -> list[bool]:
+        left_vals = self.left.eval(predicates)
+        right_vals = self.right.eval(predicates)
+        return [(not l) or r for l, r in zip(left_vals, right_vals)]
+
+
+@dataclass(frozen=True)
 class Eventually(Formula):
     child: Formula
 

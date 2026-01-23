@@ -56,3 +56,9 @@ Line-2 formula complexity (F1–F5) experiments:
 ```bash
 python scripts/run_formula_complexity_line2.py --formula-suite --output results/formula_line2.jsonl
 ```
+
+Complex formula suite (Phi1–Phi5) with D=8/16 bond dimensions:
+
+```bash
+python scripts/run_complex_formula_suite.py --formula-suite --output results/complex_formula_suite.jsonl
+```
